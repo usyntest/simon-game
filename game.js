@@ -1,89 +1,87 @@
-var sequence = [];
 var colors = ["green", "red", "yellow", "blue"];
-var level = 0;
+
 var clicks = [];
+var sequence = [];
 
-$("*").keydown(start);
+var started = false;
 
-function start() {
-  console.log("it starts");
+var level = 0;
 
-  if ($("#level-title").hasClass("game-over")) {
-    $("#level-title").removeClass("game-over");
+$(document).keypress(function () {
+  if (!started) {
+    $("#level-title").text("Level " + level);
+    nextSequence();
+    started = true;
   }
-  $("*").off("keydown", start);
-  changeLevel();
-  $(".btn").click(main);
-}
+});
 
-function main(elem) {
-  // push the btn clicked into clicks
-  clicks.push($(elem).attr("id"));
-  // check if its eql to the element at the same place in sequence
-  var position = clicks.length - 1;
-  if (!(clicks[position] === sequence[position])) {
-    audioPlay("wrong");
-    $("#level-title").addClass("game-over");
-    $("#level-title").text("Press A Key to Start");
-  } else {
-    console.log("it is correct");
-  }
-}
+$(".btn").click(function () {
+  var userChosenColor = $(this).attr("id");
+  clicks.push(userChosenColor);
 
-function changeLevel() {
-  // increase the level and change the title
+  checkAnswer(clicks.length - 1);
+
+  playAudio(userChosenColor);
+  animatePress(userChosenColor);
+});
+
+function nextSequence() {
+  clicks = [];
   level += 1;
   $("#level-title").text("Level " + level);
 
-  // add the color to the sequence
-  sequence.push(randomColor());
+  var randomNum = Math.floor(Math.random() * 4);
+  var color = colors[randomNum];
+
+  if (sequence.length === 0) {
+    sequence.push(color);
+  } else if (sequence[sequence.length - 1] === color) {
+    nextSequence();
+  } else {
+    sequence.push(color);
+  }
+
+  $("#" + color)
+    .fadeOut(100)
+    .fadeIn(100);
+
+  playAudio(color);
 }
 
-function randomColor() {
-  // generatest a random number between 1 and 4 and gives out a color;
-  var random = Math.floor(Math.random() * 4) + 1;
-  var color = colors[random];
+function checkAnswer(currentLevel) {
+  if (clicks[currentLevel] === sequence[currentLevel]) {
+    if (clicks.length === sequence.length) {
+      console.log("right");
+      setTimeout(function () {
+        nextSequence();
+      }, 1000);
+    }
+  } else {
+    playAudio("wrong");
+    $("body").addClass("game-over");
+    $("#level-title").text("Game Over, Press Any Key to Restart");
+    setTimeout(function () {
+      $("body").removeClass("game-over");
+    }, 200);
+    wrong();
+  }
+}
 
-  // the random color that is generated is highlighted
-  $(`#${color}`).addClass("pressed");
+function wrong() {
+  started = false;
+  sequence = [];
+  level = 0;
+}
+
+function animatePress(color) {
+  $("#" + color).addClass("pressed");
+
   setTimeout(function () {
-    $(`#${color}`).removeClass("pressed");
-  }, 200);
-
-  // the color that is generated returned
-  return color;
+    $("#" + color).removeClass("pressed");
+  }, 100);
 }
 
-function audioPlay(path) {
-  var audio = new Audio(`sounds/${path}.mp3`);
+function playAudio(name) {
+  var audio = new Audio("sounds/" + name + ".mp3");
   audio.play();
 }
-// function main() {
-//   while (true) {
-//     if (clicked(this)) {
-//       console.log("They are equal");
-//     } else {
-//       console.log("Pushed the wrong button");
-//       break;
-//     }
-//   }
-// }
-
-// function start() {
-//   sequence.push(randomColor());
-//   $("#level-title");
-// }
-
-// function clicked(elem) {
-//   clicks.push($(elem).attr("id"));
-//   if (clicks === sequence) {
-//     changeLevel();
-//     return true;
-//   }
-//   return false;
-// }
-
-// function changeLevel() {
-//   level += 1;
-//   $("#levelTitle").text("Level " + level);
-// }
